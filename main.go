@@ -2,10 +2,12 @@ package main
 
 import (
 	"AuthInGo/app"
+	"AuthInGo/config"
 )
 
 func main() {
-	cfg := app.NewConfig(":3003")
+	config.Load()
+	cfg := app.NewConfig()
 	app := app.NewApplication(cfg)
 
 	app.Run()
