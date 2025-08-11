@@ -16,8 +16,8 @@ func NewUserController(_userService services.UserService) *UserController {
 	}
 }
 
-func (uc *UserController) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Register user called in user controller")
-	uc.UserService.CreateUser()
+	uc.UserService.GetUserById()
 	w.Write([]byte("User registration endpoint"))
 }

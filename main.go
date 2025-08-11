@@ -2,7 +2,7 @@ package main
 
 import (
 	"AuthInGo/app"
-	"AuthInGo/config"
+	config "AuthInGo/config/env"
 )
 
 func main() {
