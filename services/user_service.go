@@ -3,6 +3,7 @@ package services
 import (
 	env "AuthInGo/config/env"
 	db "AuthInGo/db/repositories"
+	"AuthInGo/dto"
 	"AuthInGo/models"
 	"AuthInGo/utils"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 type UserService interface {
 	GetUserById() error
 	CreateUser() error
-	LoginUser() (string, error)
+	LoginUser(payload *dto.UserLoginDTO) (string, error)
 	GetAllUsers() ([]*models.User, error)
 	DeleteUserById(id int) error
 }
@@ -47,27 +48,27 @@ func (u *UserServiceImpl) CreateUser() error {
 	return nil
 }
 
-func (u *UserServiceImpl) LoginUser() (string, error) {
-	fmt.Println("Login user service called")
-	email := "test2@gmail.com"
-	password := "hashedPassword123@example"
+func (u *UserServiceImpl) LoginUser(payload *dto.UserLoginDTO) (string, error) {
+	// email := "test2@gmail.com"
+	// password := "hashedPassword123@example"
 
-	user, err := u.userRepository.GetByEmail(email)
+	user, err := u.userRepository.GetByEmail(payload.Email)
 	if err != nil {
 		fmt.Println("Error fetching user by email:", err)
 		return "", err
 	}
 	if user == nil {
 		fmt.Println("User not found")
-		return "", fmt.Errorf("user not found with email: %s", email)
+		return "", fmt.Errorf("user not found with email: %s", payload.Email)
 	}
 
-	isPasswordValid := utils.CheckPasswordHash(password, user.Password)
+	isPasswordValid := utils.CheckPasswordHash(payload.Password, user.Password)
 	if !isPasswordValid {
 		fmt.Println("Password does not match")
+		return "", fmt.Errorf("invalid password for user: %s", payload.Email)
 	}
 
-	payload := jwt.MapClaims{
+	jwtPayload := jwt.MapClaims{
 		"email":    user.Email,
 		"username": user.Username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token valid for 24 hours
@@ -75,7 +76,7 @@ func (u *UserServiceImpl) LoginUser() (string, error) {
 		"nbf":      time.Now().Unix(),                     // Not before time
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(env.GetString("JWT_SECRET", "TOKEN")))
@@ -85,7 +86,7 @@ func (u *UserServiceImpl) LoginUser() (string, error) {
 		return "", err
 	}
 
-	fmt.Println("Generated JWT Token:", tokenString)
+	// fmt.Println("Generated JWT Token:", tokenString)
 
 	return tokenString, nil
 }
