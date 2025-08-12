@@ -10,6 +10,7 @@ type UserRepository interface {
 	GetById() (*models.User, error)
 	Create(username string, email string, hashedPassword string) error
 	GetAll() ([]*models.User, error)
+	GetByEmail(email string) (*models.User, error)
 }
 
 type UserRepositoryImpl struct {
@@ -105,6 +106,29 @@ func (u *UserRepositoryImpl) GetById() (*models.User, error) {
 	}
 
 	fmt.Println("User fetched successfully", user)
+
+	return user, nil
+}
+
+func (u *UserRepositoryImpl) GetByEmail(email string) (*models.User, error) {
+	query := "SELECT id, username, password, email, created_at, updated_at FROM users WHERE email = ?"
+
+	row := u.db.QueryRow(query, email)
+	user := &models.User{}
+
+	err := row.Scan(&user.Id, &user.Username, &user.Password, &user.Email, &user.Created_at, &user.Updated_at)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println("No rows found")
+			return nil, err
+		} else {
+			fmt.Println("Error scanning user")
+			return nil, err
+		}
+	}
+
+	fmt.Println("User fetched successfully by email", user)
 
 	return user, nil
 }

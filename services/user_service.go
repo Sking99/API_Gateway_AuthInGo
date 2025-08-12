@@ -1,15 +1,19 @@
 package services
 
 import (
+	env "AuthInGo/config/env"
 	db "AuthInGo/db/repositories"
 	"AuthInGo/utils"
 	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserService interface {
 	GetUserById() error
 	CreateUser() error
-	LoginUser() error
+	LoginUser() (string, error)
 }
 
 type UserServiceImpl struct {
@@ -40,14 +44,45 @@ func (u *UserServiceImpl) CreateUser() error {
 	return nil
 }
 
-func (u *UserServiceImpl) LoginUser() error {
+func (u *UserServiceImpl) LoginUser() (string, error) {
 	fmt.Println("Login user service called")
-	// username := "testuser2"
+	email := "test2@gmail.com"
 	password := "hashedPassword123@example"
 
-	response := utils.CheckPasswordHash(password, "$2a$10$VqkLETn926U/vS2gHAEg9ODHaA/DZKFpyfBH2VctzMB8bH0wpLwom")
+	user, err := u.userRepository.GetByEmail(email)
+	if err != nil {
+		fmt.Println("Error fetching user by email:", err)
+		return "", err
+	}
+	if user == nil {
+		fmt.Println("User not found")
+		return "", fmt.Errorf("user not found with email: %s", email)
+	}
 
-	fmt.Println("Password match:", response)
+	isPasswordValid := utils.CheckPasswordHash(password, user.Password)
+	if !isPasswordValid {
+		fmt.Println("Password does not match")
+	}
 
-	return nil
+	payload := jwt.MapClaims{
+		"email":    user.Email,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token valid for 24 hours
+		"iat":      time.Now().Unix(),                     // Issued at time
+		"nbf":      time.Now().Unix(),                     // Not before time
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte(env.GetString("JWT_SECRET", "TOKEN")))
+
+	if err != nil {
+		fmt.Println("Error signing token:", err)
+		return "", err
+	}
+
+	fmt.Println("Generated JWT Token:", tokenString)
+
+	return tokenString, nil
 }
