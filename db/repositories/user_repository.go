@@ -11,6 +11,7 @@ type UserRepository interface {
 	Create(username string, email string, hashedPassword string) error
 	GetAll() ([]*models.User, error)
 	GetByEmail(email string) (*models.User, error)
+	DeleteById(id int) error
 }
 
 type UserRepositoryImpl struct {
@@ -39,7 +40,7 @@ func (u *UserRepositoryImpl) GetAll() ([]*models.User, error) {
 		}
 	}
 
-	var users []models.User
+	var users []*models.User
 
 	for rows.Next() {
 		user := &models.User{}
@@ -47,14 +48,14 @@ func (u *UserRepositoryImpl) GetAll() ([]*models.User, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		users = append(users, *user)
+		fmt.Println("User fetched successfully", *user)
+		users = append(users, user)
 
 	}
 
 	fmt.Println("Users data:", users)
 
-	return nil, nil
+	return users, nil
 }
 
 func (u *UserRepositoryImpl) Create(username string, email string, hashedPassword string) error {
@@ -131,4 +132,30 @@ func (u *UserRepositoryImpl) GetByEmail(email string) (*models.User, error) {
 	fmt.Println("User fetched successfully by email", user)
 
 	return user, nil
+}
+
+func (u *UserRepositoryImpl) DeleteById(id int) error {
+	query := "DELETE FROM users WHERE id = ?"
+	result, err := u.db.Exec(query, id)
+
+	if err != nil {
+		fmt.Println("Error deleting user by id")
+		return err
+	}
+
+	rowAffected, rowErr := result.RowsAffected()
+
+	if rowErr != nil {
+		fmt.Println("Error affecting the row")
+		return rowErr
+	}
+
+	if rowAffected == 0 {
+		fmt.Println("User not deleted")
+		return nil
+	}
+
+	fmt.Println("User deleted successfully, Row affected:", rowAffected)
+
+	return nil
 }

@@ -3,6 +3,7 @@ package services
 import (
 	env "AuthInGo/config/env"
 	db "AuthInGo/db/repositories"
+	"AuthInGo/models"
 	"AuthInGo/utils"
 	"fmt"
 	"time"
@@ -14,6 +15,8 @@ type UserService interface {
 	GetUserById() error
 	CreateUser() error
 	LoginUser() (string, error)
+	GetAllUsers() ([]*models.User, error)
+	DeleteUserById(id int) error
 }
 
 type UserServiceImpl struct {
@@ -85,4 +88,26 @@ func (u *UserServiceImpl) LoginUser() (string, error) {
 	fmt.Println("Generated JWT Token:", tokenString)
 
 	return tokenString, nil
+}
+
+func (u *UserServiceImpl) GetAllUsers() ([]*models.User, error) {
+	fmt.Println("Get all users service called")
+	users, err := u.userRepository.GetAll()
+	if err != nil {
+		fmt.Println("Error fetching users:", err)
+		return nil, err
+	}
+	fmt.Println("Fetched users in service:", users)
+	return users, nil
+}
+
+func (u *UserServiceImpl) DeleteUserById(id int) error {
+	fmt.Println("Delete user by ID service called")
+	err := u.userRepository.DeleteById(id)
+	if err != nil {
+		fmt.Println("Error deleting user by ID:", err)
+		return err
+	}
+	fmt.Println("User deleted successfully")
+	return nil
 }

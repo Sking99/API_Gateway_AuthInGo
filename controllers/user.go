@@ -33,3 +33,24 @@ func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 	uc.UserService.LoginUser()
 	w.Write([]byte("User login endpoint"))
 }
+
+func (uc *UserController) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Get all users called in user controller")
+	users, err := uc.UserService.GetAllUsers()
+	if err != nil {
+		http.Error(w, "Error fetching users", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(w, "Fetched users: %+v", users)
+}
+
+func (uc *UserController) DeleteUserById(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Delete user by ID called in user controller")
+	id := 1 // This should be extracted from the request
+	err := uc.UserService.DeleteUserById(id)
+	if err != nil {
+		http.Error(w, "Error deleting user", http.StatusInternalServerError)
+		return
+	}
+	w.Write([]byte("User deleted successfully"))
+}
