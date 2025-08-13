@@ -74,11 +74,11 @@ func (u *UserServiceImpl) LoginUser(payload *dto.UserLoginDTO) (string, error) {
 	}
 
 	jwtPayload := jwt.MapClaims{
-		"email":    user.Email,
-		"username": user.Username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token valid for 24 hours
-		"iat":      time.Now().Unix(),                     // Issued at time
-		"nbf":      time.Now().Unix(),                     // Not before time
+		"email": user.Email,
+		"id":    user.Id,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(), // Token valid for 24 hours
+		"iat":   time.Now().Unix(),                     // Issued at time
+		"nbf":   time.Now().Unix(),                     // Not before time
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)

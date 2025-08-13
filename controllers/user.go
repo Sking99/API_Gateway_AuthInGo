@@ -19,7 +19,10 @@ func NewUserController(_userService services.UserService) *UserController {
 }
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("id")
+	userID := r.URL.Query().Get("id")
+	if userID == "" {
+		userID = r.Context().Value("userId").(string)
+	}
 	// userID, conErr := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	// if conErr != nil {
 	// 	utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid user ID", conErr)
