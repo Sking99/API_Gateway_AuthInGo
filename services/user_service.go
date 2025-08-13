@@ -13,10 +13,10 @@ import (
 )
 
 type UserService interface {
-	GetUserById() error
-	CreateUser() error
+	GetUserById(id string) (models.User, error)
+	CreateUser(payload *dto.UserRegisterDTO) error
 	LoginUser(payload *dto.UserLoginDTO) (string, error)
-	GetAllUsers() ([]*models.User, error)
+	GetAllUsers() ([]models.User, error)
 	DeleteUserById(id int) error
 }
 
@@ -30,21 +30,26 @@ func NewUserService(_userRepository db.UserRepository) UserService {
 	}
 }
 
-func (u *UserServiceImpl) GetUserById() error {
-	fmt.Println("User service called")
-	u.userRepository.GetById()
-	return nil
+func (u *UserServiceImpl) GetUserById(id string) (models.User, error) {
+	user, err := u.userRepository.GetById(id)
+	if err != nil {
+		utils.WriteJsonErrorResponse(nil, 500, "Error fetching user by ID", err)
+		return models.User{}, err
+	}
+
+	return *user, nil
 }
 
-func (u *UserServiceImpl) CreateUser() error {
-	fmt.Println("Create user service called")
-	username := "testuser2"
-	email := "test2@gmail.com"
-	password, err := utils.GenerateHashedPassword("hashedPassword123@example")
+func (u *UserServiceImpl) CreateUser(payload *dto.UserRegisterDTO) error {
+	// username := "testuser2"
+	// email := "test2@gmail.com"
+	password, err := utils.GenerateHashedPassword(payload.Password)
 	if err != nil {
 		return err
 	}
-	u.userRepository.Create(username, email, password)
+
+	u.userRepository.Create(payload.Username, payload.Email, password)
+
 	return nil
 }
 
@@ -91,14 +96,12 @@ func (u *UserServiceImpl) LoginUser(payload *dto.UserLoginDTO) (string, error) {
 	return tokenString, nil
 }
 
-func (u *UserServiceImpl) GetAllUsers() ([]*models.User, error) {
-	fmt.Println("Get all users service called")
+func (u *UserServiceImpl) GetAllUsers() ([]models.User, error) {
 	users, err := u.userRepository.GetAll()
 	if err != nil {
 		fmt.Println("Error fetching users:", err)
 		return nil, err
 	}
-	fmt.Println("Fetched users in service:", users)
 	return users, nil
 }
 

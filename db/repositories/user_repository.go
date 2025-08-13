@@ -4,12 +4,13 @@ import (
 	"AuthInGo/models"
 	"database/sql"
 	"fmt"
+	"strconv"
 )
 
 type UserRepository interface {
-	GetById() (*models.User, error)
+	GetById(id string) (*models.User, error)
 	Create(username string, email string, hashedPassword string) error
-	GetAll() ([]*models.User, error)
+	GetAll() ([]models.User, error)
 	GetByEmail(email string) (*models.User, error)
 	DeleteById(id int) error
 }
@@ -24,7 +25,7 @@ func NewUserRepository(_db *sql.DB) UserRepository {
 	}
 }
 
-func (u *UserRepositoryImpl) GetAll() ([]*models.User, error) {
+func (u *UserRepositoryImpl) GetAll() ([]models.User, error) {
 
 	query := "SELECT * FROM users;"
 
@@ -40,7 +41,7 @@ func (u *UserRepositoryImpl) GetAll() ([]*models.User, error) {
 		}
 	}
 
-	var users []*models.User
+	var users []models.User
 
 	for rows.Next() {
 		user := &models.User{}
@@ -48,8 +49,7 @@ func (u *UserRepositoryImpl) GetAll() ([]*models.User, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("User fetched successfully", *user)
-		users = append(users, user)
+		users = append(users, *user)
 
 	}
 
@@ -85,28 +85,23 @@ func (u *UserRepositoryImpl) Create(username string, email string, hashedPasswor
 	return nil
 }
 
-func (u *UserRepositoryImpl) GetById() (*models.User, error) {
-	fmt.Println("User repository called")
+func (u *UserRepositoryImpl) GetById(id string) (*models.User, error) {
 
 	query := "SELECT id, username, password, email, created_at, updated_at FROM users WHERE id = ?"
 
-	row := u.db.QueryRow(query, 1)
+	numId, conErr := strconv.Atoi(id)
+	if conErr != nil {
+		return nil, conErr
+	}
+	row := u.db.QueryRow(query, numId)
 
 	user := &models.User{}
 
 	err := row.Scan(&user.Id, &user.Username, &user.Password, &user.Email, &user.Created_at, &user.Updated_at)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			fmt.Println("No rows found")
-			return nil, err
-		} else {
-			fmt.Println("Error scanning user")
-			return nil, err
-		}
+		return nil, err
 	}
-
-	fmt.Println("User fetched successfully", user)
 
 	return user, nil
 }

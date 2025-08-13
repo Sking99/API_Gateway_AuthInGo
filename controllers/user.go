@@ -19,15 +19,34 @@ func NewUserController(_userService services.UserService) *UserController {
 }
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Fetch user called in user controller")
-	uc.UserService.GetUserById()
-	w.Write([]byte("User profile fetch endpoint"))
+	userID := r.PathValue("id")
+	user, err := uc.UserService.GetUserById(userID)
+	if err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Error fetching user by ID", err)
+		return
+	}
+
+	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Register user called in user controller")
-	uc.UserService.CreateUser()
-	w.Write([]byte("User registration endpoint"))
+	var payload dto.UserRegisterDTO
+
+	if jsonErr := utils.ReadJsonRequest(r, &payload); jsonErr != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid request payload", jsonErr)
+		return
+	}
+	if validationErr := utils.Validator.Struct(payload); validationErr != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Validation error", validationErr)
+		return
+	}
+
+	if err := uc.UserService.CreateUser(&payload); err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Error creating user", err)
+		return
+	}
+
+	utils.WriteJsonSuccessResponse(w, http.StatusCreated, "User created successfully", nil)
 }
 
 func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -55,13 +74,13 @@ func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get all users called in user controller")
 	users, err := uc.UserService.GetAllUsers()
 	if err != nil {
 		http.Error(w, "Error fetching users", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(w, "Fetched users: %+v", users)
+
+	utils.WriteJsonSuccessResponse(w, http.StatusOK, "Users fetched successfully", users)
 }
 
 func (uc *UserController) DeleteUserById(w http.ResponseWriter, r *http.Request) {
