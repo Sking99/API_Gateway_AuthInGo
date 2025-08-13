@@ -4,8 +4,8 @@ import (
 	"AuthInGo/dto"
 	"AuthInGo/services"
 	"AuthInGo/utils"
-	"fmt"
 	"net/http"
+	"strconv"
 )
 
 type UserController struct {
@@ -20,6 +20,12 @@ func NewUserController(_userService services.UserService) *UserController {
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("id")
+	// userID, conErr := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	// if conErr != nil {
+	// 	utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid user ID", conErr)
+	// 	return
+	// }
+
 	user, err := uc.UserService.GetUserById(userID)
 	if err != nil {
 		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Error fetching user by ID", err)
@@ -30,16 +36,7 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var payload dto.UserRegisterDTO
-
-	if jsonErr := utils.ReadJsonRequest(r, &payload); jsonErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid request payload", jsonErr)
-		return
-	}
-	if validationErr := utils.Validator.Struct(payload); validationErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Validation error", validationErr)
-		return
-	}
+	payload := r.Context().Value("useRegisterPayload").(dto.UserRegisterDTO)
 
 	if err := uc.UserService.CreateUser(&payload); err != nil {
 		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Error creating user", err)
@@ -51,17 +48,7 @@ func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (uc *UserController) LoginUser(w http.ResponseWriter, r *http.Request) {
 
-	var payload dto.UserLoginDTO
-
-	if jsonErr := utils.ReadJsonRequest(r, &payload); jsonErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid request payload", jsonErr)
-		return
-	}
-
-	if validationErr := utils.Validator.Struct(payload); validationErr != nil {
-		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Validation error", validationErr)
-		return
-	}
+	payload := r.Context().Value("userLoginPayload").(dto.UserLoginDTO)
 
 	jwtToken, err := uc.UserService.LoginUser(&payload)
 
@@ -84,9 +71,12 @@ func (uc *UserController) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) DeleteUserById(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Delete user by ID called in user controller")
-	id := 1 // This should be extracted from the request
-	err := uc.UserService.DeleteUserById(id)
+	userID, conErr := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if conErr != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "Invalid user ID", conErr)
+		return
+	}
+	err := uc.UserService.DeleteUserById(userID)
 	if err != nil {
 		http.Error(w, "Error deleting user", http.StatusInternalServerError)
 		return

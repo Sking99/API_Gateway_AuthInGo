@@ -4,15 +4,14 @@ import (
 	"AuthInGo/models"
 	"database/sql"
 	"fmt"
-	"strconv"
 )
 
 type UserRepository interface {
 	GetById(id string) (*models.User, error)
 	Create(username string, email string, hashedPassword string) error
-	GetAll() ([]models.User, error)
+	GetAll() ([]*models.User, error)
 	GetByEmail(email string) (*models.User, error)
-	DeleteById(id int) error
+	DeleteById(id int64) error
 }
 
 type UserRepositoryImpl struct {
@@ -25,7 +24,7 @@ func NewUserRepository(_db *sql.DB) UserRepository {
 	}
 }
 
-func (u *UserRepositoryImpl) GetAll() ([]models.User, error) {
+func (u *UserRepositoryImpl) GetAll() ([]*models.User, error) {
 
 	query := "SELECT * FROM users;"
 
@@ -41,7 +40,7 @@ func (u *UserRepositoryImpl) GetAll() ([]models.User, error) {
 		}
 	}
 
-	var users []models.User
+	var users []*models.User
 
 	for rows.Next() {
 		user := &models.User{}
@@ -49,7 +48,7 @@ func (u *UserRepositoryImpl) GetAll() ([]models.User, error) {
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, *user)
+		users = append(users, user)
 
 	}
 
@@ -89,11 +88,7 @@ func (u *UserRepositoryImpl) GetById(id string) (*models.User, error) {
 
 	query := "SELECT id, username, password, email, created_at, updated_at FROM users WHERE id = ?"
 
-	numId, conErr := strconv.Atoi(id)
-	if conErr != nil {
-		return nil, conErr
-	}
-	row := u.db.QueryRow(query, numId)
+	row := u.db.QueryRow(query, id)
 
 	user := &models.User{}
 
@@ -129,7 +124,7 @@ func (u *UserRepositoryImpl) GetByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (u *UserRepositoryImpl) DeleteById(id int) error {
+func (u *UserRepositoryImpl) DeleteById(id int64) error {
 	query := "DELETE FROM users WHERE id = ?"
 	result, err := u.db.Exec(query, id)
 

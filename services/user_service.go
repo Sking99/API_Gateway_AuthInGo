@@ -13,11 +13,11 @@ import (
 )
 
 type UserService interface {
-	GetUserById(id string) (models.User, error)
+	GetUserById(id string) (*models.User, error)
 	CreateUser(payload *dto.UserRegisterDTO) error
 	LoginUser(payload *dto.UserLoginDTO) (string, error)
-	GetAllUsers() ([]models.User, error)
-	DeleteUserById(id int) error
+	GetAllUsers() ([]*models.User, error)
+	DeleteUserById(id int64) error
 }
 
 type UserServiceImpl struct {
@@ -30,14 +30,14 @@ func NewUserService(_userRepository db.UserRepository) UserService {
 	}
 }
 
-func (u *UserServiceImpl) GetUserById(id string) (models.User, error) {
+func (u *UserServiceImpl) GetUserById(id string) (*models.User, error) {
 	user, err := u.userRepository.GetById(id)
 	if err != nil {
 		utils.WriteJsonErrorResponse(nil, 500, "Error fetching user by ID", err)
-		return models.User{}, err
+		return nil, err
 	}
 
-	return *user, nil
+	return user, nil
 }
 
 func (u *UserServiceImpl) CreateUser(payload *dto.UserRegisterDTO) error {
@@ -96,7 +96,7 @@ func (u *UserServiceImpl) LoginUser(payload *dto.UserLoginDTO) (string, error) {
 	return tokenString, nil
 }
 
-func (u *UserServiceImpl) GetAllUsers() ([]models.User, error) {
+func (u *UserServiceImpl) GetAllUsers() ([]*models.User, error) {
 	users, err := u.userRepository.GetAll()
 	if err != nil {
 		fmt.Println("Error fetching users:", err)
@@ -105,7 +105,7 @@ func (u *UserServiceImpl) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func (u *UserServiceImpl) DeleteUserById(id int) error {
+func (u *UserServiceImpl) DeleteUserById(id int64) error {
 	fmt.Println("Delete user by ID service called")
 	err := u.userRepository.DeleteById(id)
 	if err != nil {
