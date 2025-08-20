@@ -12,7 +12,7 @@ type RoleService interface {
 	CreateRole(name string, description string) (*models.Role, error)
 	UpdateRole(id int64, name string, description string) (*models.Role, error)
 	DeleteRole(id int64) error
-	GetRolePermissions(roleId int64) ([]*models.Permission, error)
+	GetRolePermissions(roleId int64) ([]*models.RolePermissions, error)
 	AddPermissionToRole(roleId int64, permissionId int64) error
 	RemovePermissionFromRole(roleId int64, permissionId int64) error
 	GetAllRolePermissions() ([]*models.RolePermissions, error)
@@ -21,7 +21,6 @@ type RoleService interface {
 
 type RoleServiceImpl struct {
 	roleRepository           repo.RoleRepository
-	permissionRepository     repo.PermissionRepository
 	rolePermissionRepository repo.RolePermissionsRepository
 	userRoleRepository       repo.UserRoleRepository
 }
@@ -58,21 +57,8 @@ func (s *RoleServiceImpl) DeleteRole(id int64) error {
 	return s.roleRepository.DeleteRole(id)
 }
 
-func (s *RoleServiceImpl) GetRolePermissions(roleId int64) ([]*models.Permission, error) {
-	rolePermissions, err := s.rolePermissionRepository.GetRolePermissionByRoleId(roleId)
-	if err != nil {
-		return nil, err
-	}
-
-	var permissions []*models.Permission
-	for _, rp := range rolePermissions {
-		permission, err := s.permissionRepository.GetPermissionById(rp.PermissionId)
-		if err != nil {
-			return nil, err
-		}
-		permissions = append(permissions, permission)
-	}
-	return permissions, nil
+func (s *RoleServiceImpl) GetRolePermissions(roleId int64) ([]*models.RolePermissions, error) {
+	return s.rolePermissionRepository.GetRolePermissionByRoleId(roleId)
 }
 
 func (s *RoleServiceImpl) AddPermissionToRole(roleId int64, permissionId int64) error {

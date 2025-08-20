@@ -57,7 +57,7 @@ func (r *RoleRepositoryImpl) GetAllRoles() ([]*models.Role, error) {
 	var roles []*models.Role
 	for rows.Next() {
 		role := &models.Role{}
-		if err := rows.Scan(&role.Id, &role.Name, &role.Created_at, &role.Updated_at); err != nil {
+		if err := rows.Scan(&role.Id, &role.Name, &role.Description, &role.Created_at, &role.Updated_at); err != nil {
 			return nil, err
 		}
 		roles = append(roles, role)
